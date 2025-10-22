@@ -1918,3 +1918,67 @@ If it's a matter of changing a resource name, you could make use of `terraform s
 Use the meta-argument `depends_on` in the app resource definition. This way the app will depend on the cluster resource and order will be maintained in creation of the resources.
 
 </b>
+## 🌀 Loops in Terraform
+
+**1. Using count count lets you create multiple similar resources based on a number.**
+
+```markdown
+resource "aws_instance" "example" {
+  count = 3
+  ami           = "ami-123456"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "Instance-${count.index}"
+  }
+}
+
+```
+✅ This creates 3 EC2 instances named Instance-0, Instance-1, and Instance-
+
+**2. Using for_each for_each is great for looping over maps or sets.**
+```markdown
+variable "servers" {
+  default = {
+    web1 = "t2.micro"
+    web2 = "t3.small"
+  }
+}
+
+resource "aws_instance" "server" {
+  for_each = var.servers
+
+  ami           = "ami-123456"
+  instance_type = each.value
+
+  tags = {
+    Name = each.key
+  }
+}
+```
+✅ This creates two EC2 instances, with names web1 and web2, each using a different instance type.
+
+**3. Using for Expression (inside variables or locals) You can use for loops to transform lists or maps.**
+```markdown
+locals {
+  instance_names = ["web", "app", "db"]
+
+  upper_names = [for name in local.instance_names : upper(name)]
+}
+
+```
+⚖️ Conditionals in Terraform
+
+Terraform supports simple if-else logic via the ternary operator:
+
+```markdown
+variable "env" {
+  default = "dev"
+}
+
+locals {
+  instance_type = var.env == "prod" ? "t3.large" : "t2.micro"
+}
+
+```
+
