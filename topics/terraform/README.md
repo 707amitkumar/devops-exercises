@@ -1982,3 +1982,52 @@ locals {
 
 ```
 
+```
+⚖️ Dyanmic blocks
+
+Terraform supports simple if-else logic via the ternary operator:
+
+```markdown
+variable "ingress_rules" {
+  type = list(object({
+    from_port = number
+    to_port   = number
+    protocol  = string
+    cidr      = string
+  }))
+
+  default = [
+    { from_port = 22, to_port = 22, protocol = "tcp", cidr = "0.0.0.0/0" },
+    { from_port = 80, to_port = 80, protocol = "tcp", cidr = "0.0.0.0/0" },
+    { from_port = 443, to_port = 443, protocol = "tcp", cidr = "0.0.0.0/0" }
+  ]
+}
+resource "aws_security_group" "example" {
+  name        = "web-sg"
+  description = "Security group for web servers"
+
+  # dynamic block to create multiple ingress rules
+  dynamic "ingress" {
+    for_each = var.ingress_rules
+    content {
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = [ingress.value.cidr]
+    }
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "dynamic-sg"
+  }
+}
+
+```
+
